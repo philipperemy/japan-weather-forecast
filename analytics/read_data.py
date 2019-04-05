@@ -15,7 +15,7 @@ def _process_single_value(x: str):
     # #	#	Suspicious	A serious quality problem was found in the value, treated as omitted from the statistics.
     x = x.replace(')', '')
     x = x.strip()
-    nan_chars = [']', '-', 'X', 'u', '#']
+    nan_chars = [']', '-', '×', 'u', '#']
     if len(x) == 0:
         return np.nan
     for nan_char in nan_chars:
