@@ -1,6 +1,7 @@
 import json
 import os
 
+import numpy as np
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
@@ -43,10 +44,17 @@ def fetch_file(station_id='47897', view='13'):
 
     headers = [str(s.contents[0]) for s in raw_headers.find_all('th')]
     headers = [str(h) for h in headers if h.lower() != 'year']
-    records = [[str(s.contents[0]) for s in r.find_all('td', {'class': 'data_0_0_0_0'})] for r in raw_rows]
+    # data_1t_0_0_0 or data_0_0_0_0
+    records = [[str(s.contents[0]) for s in
+                r.find_all('td')]
+               # list(r.find_all('td', {'class': 'data_0_0_0_0'})) +
+               # list(r.find_all('td', {'class': 'data_1t_0_0_0'}))]
+               for r in raw_rows]
     indexes = [str(r.contents[0].contents[0]) for r in raw_rows]
     assert len(records) == len(indexes)
-
+    np_records = np.array(records)
+    assert list(np_records[:, 0]) == indexes
+    records = np_records[:, 1:]
     d = pd.DataFrame(data=records, columns=headers, index=indexes)
     output = {'station': station.encode('ascii', 'ignore').decode('utf8'), 'view': view, 'data': d.to_dict()}
     return output
