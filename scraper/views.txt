@@ -1,0 +1,14 @@
+1, Monthly mean air temperature
+2, Monthly mean daily maximum temperature
+3, Monthly mean daily minimum temperature
+4, Monthly mean wind speed
+5, Monthly mean sea level air pressure
+6, Monthly mean station level pressure
+7, Monthly mean relative humidity
+8, Monthly mean vapor pressure
+9, Monthly mean cloud amount
+10, Monthly mean percentage of possible sunshine
+11, Monthly mean global solar radiation
+12, Monthly total of sunshine duration
+13, Monthly total of precipitation
+14, Monthly total of snowfall depth
