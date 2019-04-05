@@ -1,2 +1,2 @@
 # Japan Weather Data
-Japanese Meteorological Agency (scraper + data)
+*From the Japanese Meteorological Agency (scraper + data)*
