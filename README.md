@@ -11,6 +11,8 @@ cd scraper && python scraper.py # data will be located in ../output
 
 ## Data format
 
+Examples are provided [here](output).
+
 ```json
 {
   "station": "WAKKANAIWMO Station ID:47401",
