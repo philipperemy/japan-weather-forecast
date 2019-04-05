@@ -34,7 +34,7 @@ def main():
     m = Sequential()
     m.add(LSTM(32, input_shape=sequences.shape[1:]))
     m.add(Dense(1, activation='relu'))
-    m.compile(loss='mse', optimizer='adam')
+    m.compile(loss='mse', optimizer='rmsprop')
     # validation_split: Float between 0 and 1.
     #                 Fraction of the training data to be used as validation data.
     #                 The model will set apart this fraction of the training data,
