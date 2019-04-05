@@ -1,5 +1,5 @@
 # Japan Weather Data
-*From the Japanese Meteorological Agency (scraper + data)*
+*From the Japanese Meteorological Agency (scraper + data)* 🌞🌧️🌈🌩️❄️
 
 ## Get started
 
