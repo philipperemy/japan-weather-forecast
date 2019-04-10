@@ -15,6 +15,7 @@ pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 10000)
 
 
+# first run
 # AVX2 FMA
 # 135114/135114 [==============================] - 66s 490us/step - loss: 0.7046 - val_loss: 0.6888
 # Epoch 2/100
@@ -35,20 +36,46 @@ pd.set_option('display.width', 10000)
 # 135114/135114 [==============================] - 90s 663us/step - loss: 0.6157 - val_loss: 0.6058
 # Epoch 10/100
 
+# second run
+# AVX2 FMA
+# 135114/135114 [==============================] - 83s 613us/step - loss: 0.7066 - val_loss: 0.6915
+# Epoch 2/100
+# 135114/135114 [==============================] - 67s 493us/step - loss: 0.6841 - val_loss: 0.6669
+# Epoch 3/100
+# 135114/135114 [==============================] - 64s 470us/step - loss: 0.6614 - val_loss: 0.6463
+# Epoch 4/100
+# 135114/135114 [==============================] - 67s 493us/step - loss: 0.6464 - val_loss: 0.6343
+# Epoch 5/100
+# 135114/135114 [==============================] - 69s 507us/step - loss: 0.6377 - val_loss: 0.6258
+# Epoch 6/100
+# 135114/135114 [==============================] - 67s 493us/step - loss: 0.6306 - val_loss: 0.6190
+# Epoch 7/100
+# 135114/135114 [==============================] - 73s 537us/step - loss: 0.6245 - val_loss: 0.6130
+# Epoch 8/100
+# 135114/135114 [==============================] - 74s 551us/step - loss: 0.6192 - val_loss: 0.6085
+# Epoch 9/100
+# 135114/135114 [==============================] - 61s 451us/step - loss: 0.6154 - val_loss: 0.6057
+
 def main():
     sequences = []
     targets = []
     lookback_window = 50
-    for input_filename in glob('../output/*_VIEW_13.json'):
+    raw_time_sequences = []
+    for input_filename in sorted(glob('../output/*_VIEW_13.json'))[0:10]:
         # print(input_filename)
         d = read_file(input_filename)
         d.drop('Annual', axis=1, inplace=True)
         # print(d)
         time_sequence = d.values.flatten()
         time_sequence = time_sequence[~np.isnan(time_sequence)]
-        # normalization
         time_sequence = np.log(time_sequence + 1e-6)  # simple normalization. could be per station.
-        time_sequence = (time_sequence - np.mean(time_sequence)) / np.std(time_sequence)
+        raw_time_sequences.append(time_sequence)
+    mean = np.mean(np.concatenate(raw_time_sequences))
+    std = np.std(np.concatenate(raw_time_sequences))
+    scaler = 10
+    for time_sequence in raw_time_sequences:
+        # normalization
+        time_sequence = (time_sequence - mean) / std / scaler
         for i in range(lookback_window, len(time_sequence) - lookback_window):
             sequences.append(time_sequence[i - lookback_window:i])
             targets.append(time_sequence[i])
@@ -66,7 +93,7 @@ def main():
     m.add(LSTM(128, input_shape=sequences.shape[1:]))
     m.add(Dense(128, activation='relu'))
     m.add(Dense(1, activation='linear'))
-    opt = RMSprop(lr=1e-5)
+    opt = RMSprop(lr=1e-4)
     m.compile(loss='mae', optimizer=opt)
     # validation_split: Float between 0 and 1.
     #                 Fraction of the training data to be used as validation data.
@@ -76,11 +103,15 @@ def main():
     #                 on this data at the end of each epoch.
     #                 The validation data is selected from the last samples
     #                 in the `x` and `y` data provided, before shuffling.
-    m.fit(sequences, targets, shuffle=True, validation_split=0.2, epochs=100, batch_size=256)
-    # for epoch in range(100):
-    #     error = np.mean(np.abs(np.exp(m.predict(sequences)) - np.exp(targets)))
-    #     print(f'mean prediction = {np.mean(np.exp(m.predict(sequences)))}.')
-    #     print(f'Average unit error: {error}.')
+    # m.fit(sequences, targets, shuffle=True, validation_split=0.2, epochs=100, batch_size=256)
+    for epoch in range(100):
+        p = m.predict(sequences)
+        p = np.exp(p * scaler * std + mean)
+        t = np.exp(targets * scaler * std + mean)
+        error = np.mean(np.abs(p - t))
+        print(f'mean prediction = {np.mean(p)}.')
+        print(f'Average unit error: {error}.')
+        m.fit(sequences, targets, shuffle=True, validation_split=0.2, epochs=1, batch_size=256, verbose=0)
 
 
 if __name__ == '__main__':
