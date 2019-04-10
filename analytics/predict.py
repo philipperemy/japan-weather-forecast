@@ -15,53 +15,12 @@ pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 10000)
 
 
-# first run
-# AVX2 FMA
-# 135114/135114 [==============================] - 66s 490us/step - loss: 0.7046 - val_loss: 0.6888
-# Epoch 2/100
-# 135114/135114 [==============================] - 66s 491us/step - loss: 0.6810 - val_loss: 0.6645
-# Epoch 3/100
-# 135114/135114 [==============================] - 73s 544us/step - loss: 0.6603 - val_loss: 0.6461
-# Epoch 4/100
-# 135114/135114 [==============================] - 67s 494us/step - loss: 0.6469 - val_loss: 0.6349
-# Epoch 5/100
-# 135114/135114 [==============================] - 71s 528us/step - loss: 0.6385 - val_loss: 0.6267
-# Epoch 6/100
-# 135114/135114 [==============================] - 78s 580us/step - loss: 0.6315 - val_loss: 0.6197
-# Epoch 7/100
-# 135114/135114 [==============================] - 78s 578us/step - loss: 0.6253 - val_loss: 0.6137
-# Epoch 8/100
-# 135114/135114 [==============================] - 69s 513us/step - loss: 0.6199 - val_loss: 0.6090
-# Epoch 9/100
-# 135114/135114 [==============================] - 90s 663us/step - loss: 0.6157 - val_loss: 0.6058
-# Epoch 10/100
-
-# second run
-# AVX2 FMA
-# 135114/135114 [==============================] - 83s 613us/step - loss: 0.7066 - val_loss: 0.6915
-# Epoch 2/100
-# 135114/135114 [==============================] - 67s 493us/step - loss: 0.6841 - val_loss: 0.6669
-# Epoch 3/100
-# 135114/135114 [==============================] - 64s 470us/step - loss: 0.6614 - val_loss: 0.6463
-# Epoch 4/100
-# 135114/135114 [==============================] - 67s 493us/step - loss: 0.6464 - val_loss: 0.6343
-# Epoch 5/100
-# 135114/135114 [==============================] - 69s 507us/step - loss: 0.6377 - val_loss: 0.6258
-# Epoch 6/100
-# 135114/135114 [==============================] - 67s 493us/step - loss: 0.6306 - val_loss: 0.6190
-# Epoch 7/100
-# 135114/135114 [==============================] - 73s 537us/step - loss: 0.6245 - val_loss: 0.6130
-# Epoch 8/100
-# 135114/135114 [==============================] - 74s 551us/step - loss: 0.6192 - val_loss: 0.6085
-# Epoch 9/100
-# 135114/135114 [==============================] - 61s 451us/step - loss: 0.6154 - val_loss: 0.6057
-
 def main():
     sequences = []
     targets = []
     lookback_window = 50
     raw_time_sequences = []
-    for input_filename in sorted(glob('../output/*_VIEW_13.json'))[0:10]:
+    for input_filename in sorted(glob('../output/*_VIEW_13.json'))[0:20]:
         # print(input_filename)
         d = read_file(input_filename)
         d.drop('Annual', axis=1, inplace=True)
@@ -104,14 +63,18 @@ def main():
     #                 The validation data is selected from the last samples
     #                 in the `x` and `y` data provided, before shuffling.
     # m.fit(sequences, targets, shuffle=True, validation_split=0.2, epochs=100, batch_size=256)
+
+    validation_split = 0.2
+    cutoff = int(len(sequences) * (1 - validation_split))
+    x_train, y_train = sequences[:cutoff], targets[:cutoff]
+    x_test, y_test = sequences[cutoff:], targets[cutoff:]
+
     for epoch in range(100):
-        p = m.predict(sequences)
-        p = np.exp(p * scaler * std + mean)
-        t = np.exp(targets * scaler * std + mean)
+        p = np.exp(m.predict(x_test) * scaler * std + mean)
+        t = np.exp(y_test * scaler * std + mean)
         error = np.mean(np.abs(p - t))
-        print(f'mean prediction = {np.mean(p)}.')
-        print(f'Average unit error: {error}.')
-        m.fit(sequences, targets, shuffle=True, validation_split=0.2, epochs=1, batch_size=256, verbose=0)
+        print(epoch, error)
+        m.fit(x_train, y_train, shuffle=True, validation_data=(x_test, y_test), epochs=1, batch_size=256, verbose=0)
 
 
 if __name__ == '__main__':
