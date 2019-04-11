@@ -61,7 +61,7 @@ def fetch_file(station_id='47897', view='13'):
 
 
 def main():
-    views = ['12', '13']  # see views.txt
+    views = ['1']  # see views.txt
     for view in views:
         fetch_files(os.path.join('..', 'output'), view)
 

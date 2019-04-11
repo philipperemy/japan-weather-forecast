@@ -25,7 +25,7 @@ class VerticalModel:
         x = Lambda(lambda y: K.reshape(y, (r_shape[0] * r_shape[2], r_shape[1], 1)))(x)
 
         x = GRU(param.hidden_size, return_sequences=True)(x)
-        # x = GRU(param.hidden_size, return_sequences=True)(x)
+        x = GRU(param.hidden_size, return_sequences=True)(x)
         # x = TCN(x, nb_filters=param.hidden_size, dilations=[1, 2, 4, 8, 16, 32, 64, 128], return_sequences=True,
         #         dropout_rate=param.dropout_rate)
 
@@ -49,7 +49,7 @@ class VerticalModel:
         :param y_pred: The prediction of the model.
         :return: The loss.
         """
-        return K.mean(K.square(y_true[:, :self.train_until_day, :] - y_pred[:, :self.train_until_day, :]))
+        return K.mean(K.abs(y_true[:, :self.train_until_day, :] - y_pred[:, :self.train_until_day, :]))
 
     def restore(self, checkpoint_path):
         """

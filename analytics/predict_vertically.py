@@ -59,11 +59,12 @@ def main():
     class Params:
         num_days = None
         time_bins = 12
-        hidden_size = 32
+        hidden_size = 64
         dropout_rate = 0.2
 
     vm = VerticalModel(batch_size=256, param=Params)
     vm.model.compile(loss=vm.loss, optimizer=Adam(lr=1e-4, clipnorm=1.))
+    vm.model.summary()
 
     for epoch in range(int(1e5)):
 
