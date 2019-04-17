@@ -1,4 +1,5 @@
 # https://www.data.jma.go.jp/obd/stats/data/en/smp/index.html#remarks
+import os
 from glob import glob
 
 import numpy as np
@@ -15,6 +16,11 @@ pd.set_option('display.width', 10000)
 HOW_MANY_YEARS_IN_TEST = 10
 
 SCALE = 10
+
+"""
+BEST RUN WAS:
+3744 41.46647466135122 52.765413584991336
+"""
 
 
 def norm(x):
@@ -66,6 +72,7 @@ def main():
     vm.model.compile(loss=vm.loss, optimizer=Adam(lr=1e-4, clipnorm=1.))
     vm.model.summary()
 
+    last_test_error = 1e9
     for epoch in range(int(1e5)):
 
         p = de_norm(vm.model.predict(x), mean, std)
@@ -83,6 +90,15 @@ def main():
         # print(t.flatten()[0:20])
         # print('-' * 80)
         print(epoch, train_error, test_error)
+
+        if test_error < last_test_error:
+            if not os.path.exists('checkpoints'):
+                os.makedirs('checkpoints')
+            for filename in glob('checkpoints/*.h5'):
+                os.remove(filename)
+            vm.model.save_weights(f'checkpoints/{epoch}_{train_error:.3f}_{test_error:.3f}.h5', overwrite=True)
+            last_test_error = test_error
+
         vm.model.fit(x, y, shuffle=True, epochs=5, batch_size=256, verbose=0)
 
 
