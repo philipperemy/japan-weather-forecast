@@ -13,13 +13,14 @@ class VerticalModel:
         :param param: Some parameters required by the model. dropout_rate, hidden_size...
         """
         self.initial_epoch = 0
-        input_ratios = Input(batch_shape=(batch_size, param.num_days, param.time_bins), name='Data')
-        train_until_day = Input(batch_shape=(batch_size, 1,), name='TrainUntilDay', dtype='int32')
-        self.train_until_day = train_until_day[0, 0]
-        r_shape = K.shape(input_ratios)
+        inputs = Input(batch_shape=(batch_size, param.num_days, param.time_bins), name='Data')
+        # mean = Input(batch_shape=(batch_size, 1, param.time_bins), name='Mean')
+        # std = Input(batch_shape=(batch_size, 1, param.time_bins), name='Std')
+
+        r_shape = K.shape(inputs)
 
         # (stock, day, time) -> (stock, time, day):
-        x = Permute((2, 1))(input_ratios)
+        x = Permute((2, 1))(inputs)
 
         # (stock, time, day) -> (stock * time, day, 1)
         x = Lambda(lambda y: K.reshape(y, (r_shape[0] * r_shape[2], r_shape[1], 1)))(x)
@@ -37,18 +38,12 @@ class VerticalModel:
         x = Dropout(param.dropout_rate)(x)
         x = Dense(1, activation='linear')(x)  # could be positive, negative here.
 
-        x = Lambda(lambda y: K.squeeze(y, axis=3))(x)
+        x = Lambda(lambda z_: K.squeeze(z_, axis=3))(x)
 
-        self.model = Model(inputs=[input_ratios, train_until_day], outputs=[x])
+        # x = Lambda(lambda z_: K.exp(z_ * SCALE * std + mean) - 1e-2)(x)
 
-    def loss(self, y_true, y_pred):
-        """
-        Function to compute the loss.
-        :param y_true: The ground truth.
-        :param y_pred: The prediction of the model.
-        :return: The loss.
-        """
-        return K.mean(K.abs(y_true[:, :self.train_until_day, :] - y_pred[:, :self.train_until_day, :]))
+        # self.model = Model(inputs=[inputs, mean, std], outputs=[x])
+        self.model = Model(inputs=inputs, outputs=[x])
 
     def restore(self, checkpoint_path):
         """

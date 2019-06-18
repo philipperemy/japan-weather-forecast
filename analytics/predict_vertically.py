@@ -43,8 +43,8 @@ def mae(a, b):
 
 def norm(x):
     x = np.log(x + 1e-2)  # simple normalization. could be per station.
-    mean = np.mean(x)
-    std = np.std(x)
+    mean = np.mean(x, axis=1, keepdims=True)
+    std = np.std(x, axis=1, keepdims=True)
 
     # import matplotlib.pyplot as plt
     # plt.hist(x.flatten(), 40)
@@ -90,7 +90,6 @@ def main():
     assert x[0, 1, 0] == y[0, 0, 0]
     print(x.shape)
     train_until_index = x.shape[1] - HOW_MANY_YEARS_IN_TEST
-    x = [x, np.ones(len(x)) * train_until_index]
 
     from vertical_model import VerticalModel
 
@@ -100,8 +99,8 @@ def main():
         hidden_size = 64
         dropout_rate = 0.2
 
-    vm = VerticalModel(batch_size=256, param=Params)
-    vm.model.compile(loss=vm.loss, optimizer=Adam(lr=1e-4, clipnorm=1.))
+    vm = VerticalModel(batch_size=None, param=Params)
+    vm.model.compile(loss='mae', optimizer=Adam(lr=1e-4, clipnorm=1.))
     vm.restore('checkpoints')
     vm.model.summary()
 
@@ -124,6 +123,9 @@ def main():
         test_error = mae(p_test, t_test)
         test_error_dumb = mae(ss_test_dumb, t_test)
 
+        print(p_test[0, 0, :])
+        print(t_test[0, 0, :])
+
         print(f'{str(step).zfill(5)}, tr = {train_error:.3f}, te = {test_error:.3f}, te_b = {test_error_dumb:.3f}')
 
         if test_error < last_test_error:
@@ -132,7 +134,8 @@ def main():
             vm.model.save_weights(f'checkpoints/{step}_{train_error:.3f}_{test_error:.3f}.h5', overwrite=True)
             last_test_error = test_error
 
-        vm.model.fit(x, y, shuffle=True, epochs=5, batch_size=256, verbose=0)
+        vm.model.fit(x[:, :train_until_index], y[:, :train_until_index],
+                     shuffle=True, batch_size=16, epochs=5, verbose=0)
 
 
 if __name__ == '__main__':
