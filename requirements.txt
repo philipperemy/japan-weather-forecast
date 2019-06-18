@@ -2,4 +2,7 @@ pandas
 requests
 numpy
 beautifulsoup4
-keras-tcn==2.1.2
+keras
+tensorflow
+keras-tcn
+natsort
