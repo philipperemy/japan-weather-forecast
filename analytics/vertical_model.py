@@ -64,7 +64,7 @@ class VerticalModel:
             last_checkpoint = natsorted(checkpoints)[-1]
             print(f'Loading weights from {last_checkpoint}.')
             self.model.load_weights(last_checkpoint)
-            last_epoch = int(os.path.basename(last_checkpoint).split('_')[1])
+            last_epoch = int(os.path.basename(last_checkpoint).split('_')[0])
             self.initial_epoch = last_epoch + 1
             print(f'Starting from epoch = {self.initial_epoch}.')
         else:

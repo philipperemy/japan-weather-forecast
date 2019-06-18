@@ -23,6 +23,17 @@ BEST RUN WAS:
 """
 
 
+def ma(x, period=180):  # (num_stocks, num_days, num_bins)
+    num_stocks, num_days, num_bins = x.shape
+    assert len(x.shape) == 3
+    x = np.roll(x, shift=1, axis=1)
+    x = np.reshape(np.transpose(x, (0, 2, 1)), [num_stocks * num_bins, num_days])  # (num_stocks, num_bins, num_days)
+    d = pd.DataFrame(np.transpose(x)).rolling(window=period, center=False).mean().fillna(method='bfill')
+    a = np.transpose(d.values)
+    a = np.transpose(np.reshape(a, [num_stocks, num_bins, num_days]), (0, 2, 1))
+    return a
+
+
 def norm(x):
     x = np.log(x + 1e-6)  # simple normalization. could be per station.
     mean = np.mean(x)
@@ -70,6 +81,7 @@ def main():
 
     vm = VerticalModel(batch_size=256, param=Params)
     vm.model.compile(loss=vm.loss, optimizer=Adam(lr=1e-4, clipnorm=1.))
+    vm.restore('checkpoints')
     vm.model.summary()
 
     last_test_error = 1e9
@@ -84,12 +96,22 @@ def main():
         t_train = t[:, :train_until_index]
         t_test = t[:, train_until_index:]
 
+        print(t_train.shape, t_test.shape)
+        ss_test = np.tile(np.median(t_train, axis=1, keepdims=True), (1, t_test.shape[1], 1))
+
         train_error = np.mean(np.abs(p_train - t_train))
-        test_error = np.mean(np.abs(p_test - t_test))
-        # print(p.flatten()[0:20])
-        # print(t.flatten()[0:20])
-        # print('-' * 80)
-        print(epoch, train_error, test_error)
+        test_error = np.mean(np.abs(p_test[:, :-1, :] - t_test[:, :-1, :]))
+        test_error_dump = np.mean(np.abs(ss_test[:, :-1, :] - t_test[:, :-1, :]))
+
+        print(epoch, train_error, test_error, test_error_dump)
+        exit(99)
+
+        for i in range(len(p_train)):
+            print('-' * 80)
+            print(i, np.mean(np.abs(p_train[i] - t_train[i])), np.mean(np.abs(p_test[i] - t_test[i])))
+
+        print(np.matrix(p_test[8, -10:-1, :]))
+        print(np.matrix(t_test[8, -10:-1, :]))
 
         if test_error < last_test_error:
             if not os.path.exists('checkpoints'):
