@@ -96,11 +96,11 @@ def main():
     class Params:
         num_days = None
         time_bins = 12
-        hidden_size = 64
-        dropout_rate = 0.2
+        hidden_size = 16
+        dropout_rate = 0.4
 
     vm = VerticalModel(batch_size=None, param=Params)
-    vm.model.compile(loss='mae', optimizer=Adam(lr=1e-4, clipnorm=1.))
+    vm.model.compile(loss='mae', optimizer=Adam(lr=1e-5, clipnorm=0.1))
     vm.restore('checkpoints')
     vm.model.summary()
 
@@ -135,7 +135,7 @@ def main():
             last_test_error = test_error
 
         vm.model.fit(x[:, :train_until_index], y[:, :train_until_index],
-                     shuffle=True, batch_size=16, epochs=5, verbose=0)
+                     shuffle=True, batch_size=256, epochs=5, verbose=0)
 
 
 if __name__ == '__main__':

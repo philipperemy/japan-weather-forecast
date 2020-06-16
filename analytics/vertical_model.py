@@ -25,9 +25,10 @@ class VerticalModel:
         # (stock, time, day) -> (stock * time, day, 1)
         x = Lambda(lambda y: K.reshape(y, (r_shape[0] * r_shape[2], r_shape[1], 1)))(x)
 
-        x = GRU(param.hidden_size, return_sequences=True)(x)
-        # x = TCN(x, nb_filters=param.hidden_size, dilations=[1, 2, 4, 8, 16, 32, 64, 128], return_sequences=True,
-        #         dropout_rate=param.dropout_rate)
+        # x = GRU(param.hidden_size, return_sequences=True)(x)
+        from tcn import TCN
+        x = TCN(nb_filters=param.hidden_size, dilations=[1, 2, 4, 8, 16, 32], return_sequences=True,
+                 dropout_rate=param.dropout_rate)(x)
 
         # (stock * time, day, hidden_size) -> (stock, time, day, hidden_size)
         x = Lambda(lambda y: K.reshape(y, shape=(r_shape[0], r_shape[2], r_shape[1], param.hidden_size)))(x)

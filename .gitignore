@@ -2,3 +2,4 @@ venv/
 *.json
 .idea/
 *.pyc
+analytics/checkpoints/
